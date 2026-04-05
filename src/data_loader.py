@@ -130,7 +130,8 @@ def convert_days_to_years(df: pd.DataFrame, columns: list[str] | None = None) ->
     Returns
     -------
     pd.DataFrame
-        DataFrame with converted columns (mutated in place, also returned).
+        The input DataFrame with new ``YEARS_*`` columns added alongside the
+        existing ``DAYS_*`` columns (mutated in place, also returned).
     """
     if columns is None:
         columns = [c for c in DAYS_COLUMNS if c in df.columns]

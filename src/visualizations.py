@@ -1,6 +1,6 @@
 """
-Reusable visualisation helpers for the Credit EDA case study.
-All functions return the Figure/Axes so callers can customise further.
+Reusable visualization helpers for the Credit EDA case study.
+All functions return the Figure/Axes so callers can customize further.
 """
 
 import matplotlib.pyplot as plt
