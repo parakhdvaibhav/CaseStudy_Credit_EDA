@@ -1,0 +1,63 @@
+name: Notebook Validation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebook-validation.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'notebooks/**'
+
+jobs:
+  validate-notebooks:
+    name: Validate Jupyter Notebooks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check notebooks can be parsed
+        run: |
+          python - <<'EOF'
+          import os, nbformat, sys
+
+          nb_dir = "notebooks"
+          errors = []
+
+          if not os.path.isdir(nb_dir):
+              print("No notebooks directory found – skipping.")
+              sys.exit(0)
+
+          for fname in os.listdir(nb_dir):
+              if not fname.endswith(".ipynb"):
+                  continue
+              path = os.path.join(nb_dir, fname)
+              try:
+                  with open(path) as f:
+                      nbformat.read(f, as_version=4)
+                  print(f"  ✓ {fname}")
+              except Exception as exc:
+                  errors.append(f"  ✗ {fname}: {exc}")
+
+          if errors:
+              print("\nNotebook validation FAILED:")
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          else:
+              print("\nAll notebooks validated successfully.")
+          EOF

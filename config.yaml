@@ -1,0 +1,18 @@
+# Analysis parameters
+analysis:
+  missing_threshold: 0.50
+  correlation_threshold: 0.70
+  target_column: TARGET
+
+# Visualization settings
+visualization:
+  figure_size: [12, 6]
+  heatmap_size: [14, 10]
+  color_palette: Set2
+
+# Data paths (relative to project root)
+paths:
+  data_raw: data/raw
+  data_processed: data/processed
+  reports: reports
+  notebooks: notebooks
