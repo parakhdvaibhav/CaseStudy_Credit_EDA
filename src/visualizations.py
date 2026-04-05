@@ -12,7 +12,6 @@ import pandas as pd
 import seaborn as sns
 
 from src.config import (
-    COLOR_PALETTE,
     DEFAULT_COLOR,
     FIGURE_SIZE,
     HEATMAP_FIGURE_SIZE,
@@ -94,9 +93,7 @@ def plot_default_analysis(
 
     fig, ax = plt.subplots(figsize=figsize)
 
-    grouped = (
-        data.groupby([feature, TARGET_COLUMN]).size().reset_index(name="count")
-    )
+    grouped = data.groupby([feature, TARGET_COLUMN]).size().reset_index(name="count")
     grouped[TARGET_COLUMN] = grouped[TARGET_COLUMN].map({0: "No Default", 1: "Default"})
 
     sns.barplot(
@@ -201,7 +198,9 @@ def plot_default_by_income(
     ax.set_title(title)
     ax.set_xlabel(income_column)
     ax.set_ylabel("Default Rate")
-    ax.axhline(y=data[TARGET_COLUMN].mean(), color="navy", linestyle="--", label="Overall Mean")
+    ax.axhline(
+        y=data[TARGET_COLUMN].mean(), color="navy", linestyle="--", label="Overall Mean"
+    )
     ax.legend()
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()

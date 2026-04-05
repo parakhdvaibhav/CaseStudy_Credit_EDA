@@ -8,7 +8,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
-from src.config import DEFAULT_MISSING_THRESHOLD, TARGET_COLUMN
+from src.config import TARGET_COLUMN
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,8 @@ def get_categorical_default_rates(
     result = {}
     for col in columns:
         if col in df.columns:
-            result[col] = df.groupby(col)[TARGET_COLUMN].mean().sort_values(ascending=False)
+            result[col] = (
+                df.groupby(col)[TARGET_COLUMN].mean().sort_values(ascending=False)
+            )
 
     return result

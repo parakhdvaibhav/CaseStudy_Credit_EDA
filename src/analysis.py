@@ -8,7 +8,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
-from src.config import CORRELATION_THRESHOLD, DEFAULT_MISSING_THRESHOLD, TARGET_COLUMN
+from src.config import CORRELATION_THRESHOLD, TARGET_COLUMN
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,9 @@ def get_highly_correlated_pairs(
         for j in range(i + 1, len(cols)):
             val = corr_matrix.iloc[i, j]
             if abs(val) >= threshold:
-                pairs.append({"feature_1": cols[i], "feature_2": cols[j], "correlation": val})
+                pairs.append(
+                    {"feature_1": cols[i], "feature_2": cols[j], "correlation": val}
+                )
 
     result = pd.DataFrame(pairs)
     if not result.empty:
@@ -143,11 +145,15 @@ def calculate_missing_by_target(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """
     result = (
         df.groupby(TARGET_COLUMN)[column]
-        .apply(lambda s: pd.Series({"missing_count": s.isnull().sum(), "total": len(s)}))
+        .apply(
+            lambda s: pd.Series({"missing_count": s.isnull().sum(), "total": len(s)})
+        )
         .reset_index()
     )
     result.columns = [TARGET_COLUMN, "stat", "value"]
-    result = result.pivot(index=TARGET_COLUMN, columns="stat", values="value").reset_index()
+    result = result.pivot(
+        index=TARGET_COLUMN, columns="stat", values="value"
+    ).reset_index()
     result["missing_pct"] = (result["missing_count"] / result["total"]) * 100
     return result
 
