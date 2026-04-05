@@ -208,6 +208,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
     if "DAYS_EMPLOYED" in df.columns:
         # DAYS_EMPLOYED of 365243 flags pensioners / not employed
+        # 365243 is a sentinel value used in the raw dataset to indicate that
+        # the applicant is a pensioner or has no recorded employment period.
         df["EMPLOYMENT_YEARS"] = np.where(
             df["DAYS_EMPLOYED"] == 365243,
             np.nan,

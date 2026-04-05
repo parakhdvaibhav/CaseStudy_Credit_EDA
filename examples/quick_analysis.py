@@ -17,11 +17,10 @@ import argparse
 import os
 import sys
 
-import matplotlib
 import numpy as np
 import pandas as pd
 
-matplotlib.use("Agg")
+# matplotlib backend is set by src/visualizations (Agg) when that module is imported.
 
 # Ensure the project root is on the Python path when running from any directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

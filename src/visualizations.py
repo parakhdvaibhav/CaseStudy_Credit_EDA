@@ -21,6 +21,7 @@ from src.config import (
 )
 
 matplotlib.use("Agg")  # Non-interactive backend – safe for CI / headless environments
+# Must be called before any other matplotlib imports that trigger the backend load.
 
 logger = logging.getLogger(__name__)
 
