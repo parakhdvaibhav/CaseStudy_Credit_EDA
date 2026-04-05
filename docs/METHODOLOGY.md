@@ -148,6 +148,6 @@ Random seeds are not required because this pipeline contains no stochastic opera
 | Limitation | Impact | Mitigation |
 |-----------|--------|-----------|
 | EDA only; no predictive model built | Cannot quantify feature importance precisely | Use findings to design features for ML model |
-| Class imbalance (~8% default rate) | Visualisations can overstate non-default patterns | Reported separately for each class; SMOTE recommended for modelling |
+| Class imbalance (~8% default rate) | Visualizations can overstate non-default patterns | Reported separately for each class; SMOTE recommended for modeling |
 | Missing data (65 cols > 30% missing) | Imputation may introduce bias | Conservative approach: dropped >50% missing; flagged >30% missing |
 | No temporal validation | Patterns may shift over time | Recommend time-based train/test split in production |
