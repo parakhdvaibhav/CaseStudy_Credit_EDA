@@ -45,7 +45,10 @@ CaseStudy_Credit_EDA/
 ├── data/
 │   ├── raw/                     # Raw CSVs (not committed)
 │   └── processed/               # Cleaned data (not committed)
-├── notebooks/                   # Jupyter notebooks
+├── notebooks/
+│   ├── 01_data_exploration.ipynb   # Load, inspect, missing values, univariate analysis
+│   ├── 02_detailed_analysis.ipynb  # Bivariate, correlation, statistical tests
+│   └── 03_insights_recommendations.ipynb  # Risk drivers & business recommendations
 ├── src/                         # Reusable Python utilities
 │   ├── __init__.py
 │   ├── config.py
@@ -62,6 +65,9 @@ CaseStudy_Credit_EDA/
 │   └── quick_analysis.py        # Runnable end-to-end example
 ├── docs/
 │   ├── API_REFERENCE.md
+│   ├── DATA_DICTIONARY.md
+│   ├── FINDINGS.md
+│   ├── METHODOLOGY.md
 │   ├── QUICK_START.md
 │   └── VISUALIZATIONS.md
 ├── reports/                     # Generated charts / outputs
@@ -127,11 +133,20 @@ Full function documentation: [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
 | Missing occupation data correlates with default | Treat missing occupation as a separate risk category |
 | AMT_CREDIT ↔ AMT_GOODS_PRICE near-perfectly correlated | Use only one in predictive models |
 
+See [docs/FINDINGS.md](docs/FINDINGS.md) for the full six-finding breakdown with supporting data.
+
 ---
 
-## Visualizations
+## Documentation
 
-See [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md) for the full chart gallery with business commentary.
+| Document | Purpose |
+|----------|---------|
+| [docs/QUICK_START.md](docs/QUICK_START.md) | 5-minute setup guide |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Full function documentation |
+| [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) | Feature definitions and data quality notes |
+| [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | End-to-end analytical pipeline |
+| [docs/FINDINGS.md](docs/FINDINGS.md) | Six key risk drivers with business actions |
+| [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md) | Chart gallery with commentary |
 
 ---
 

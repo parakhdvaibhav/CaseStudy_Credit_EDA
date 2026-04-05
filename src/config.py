@@ -59,3 +59,14 @@ HEATMAP_FIGURE_SIZE = (14, 10)
 COLOR_PALETTE = "Set2"
 DEFAULT_COLOR = "#e74c3c"
 NON_DEFAULT_COLOR = "#2ecc71"
+
+# ---------------------------------------------------------------------------
+# Engineered feature names (created by analysis.engineer_features)
+# ---------------------------------------------------------------------------
+ENGINEERED_FEATURE_COLUMNS = [
+    "CREDIT_TO_INCOME",
+    "ANNUITY_TO_INCOME",
+    "INCOME_PER_PERSON",
+    "AGE_YEARS",
+    "EMPLOYMENT_YEARS",
+]
