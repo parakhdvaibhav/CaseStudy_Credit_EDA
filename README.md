@@ -1,190 +1,216 @@
-# CaseStudy_Credit_EDA
+CaseStudy_Credit_EDA
 
-![CI](https://github.com/parakhdvaibhav/CaseStudy_Credit_EDA/actions/workflows/ci.yml/badge.svg)
-![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)
-![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)
+Exploratory Data Analysis of Home Credit loan applications to identify risk drivers of customer default and generate business-actionable insights.
 
-Exploratory data analysis of Home Credit loan application data to identify patterns that indicate customer payment difficulties.
+⸻
 
----
+Executive Summary
 
-## Executive Summary
+Using 307,511 loan applications (122 features), this project performs a structured exploratory data analysis to uncover the strongest drivers of loan default.
 
-Using a dataset of **307,511 loan applications** (122 features each), we applied comprehensive EDA to uncover the key drivers of loan default.
+Headline Findings
 
-**Headline findings:**
-* Overall default rate is approximately **8.1%** — highly imbalanced.
-* **Younger applicants (20–30 yrs)** default at roughly 2× the rate of applicants aged 40–50.
-* **Maternity-leave** and **unemployed** income types carry the highest default rates.
-* The `CREDIT_TO_INCOME` ratio is a strong risk signal — applicants above **8×** are disproportionately represented among defaults.
-* `AMT_CREDIT` and `AMT_GOODS_PRICE` are near-perfectly correlated (r ≈ 0.99) and carry redundant information.
-* ~65 columns have >30% missing values; 49 have >50% and can be dropped safely.
+• Overall default rate: ~8.1% (highly imbalanced dataset)
+• Younger applicants (20–30) default at ~2× the rate of applicants aged 40–50
+• Maternity leave and unemployed income types show highest default risk
+• CREDIT_TO_INCOME > 8× strongly correlates with default
+• AMT_CREDIT and AMT_GOODS_PRICE show near-perfect correlation (r ≈ 0.99)
+• ~65 columns have >30% missing values; 49 can be safely dropped
 
----
+This analysis provides direct business recommendations for credit risk policy.
 
-## Dataset Overview
+⸻
 
-| Property | Value |
-|----------|-------|
-| Source | [Home Credit Default Risk – Kaggle](https://www.kaggle.com/c/home-credit-default-risk) |
-| Main file | `application_data.csv` |
-| Rows | 307,511 |
-| Columns | 122 |
-| Target column | `TARGET` (1 = default, 0 = no default) |
-| Supplementary file | `previous_application.csv` (1.67 M rows) |
+Dataset Overview
 
----
+Source: https://www.kaggle.com/c/home-credit-default-risk
+Main file: application_data.csv
+Rows: 307,511
+Columns: 122
+Target column: TARGET
+Supplementary file: previous_application.csv
 
-## Repository Structure
+⸻
 
-```
-CaseStudy_Credit_EDA/
-├── .github/workflows/
-│   ├── ci.yml                   # CI: lint → test → coverage gate
-│   └── notebook-validation.yml  # Validate notebook format
-├── data/
-│   ├── raw/                     # Raw CSVs (not committed)
-│   └── processed/               # Cleaned data (not committed)
-├── notebooks/
-│   ├── 01_data_exploration.ipynb   # Load, inspect, missing values, univariate analysis
-│   ├── 02_detailed_analysis.ipynb  # Bivariate, correlation, statistical tests
-│   └── 03_insights_recommendations.ipynb  # Risk drivers & business recommendations
-├── src/                         # Reusable Python utilities
-│   ├── __init__.py
+Repository Structure
+
+CaseStudy_Credit_EDA
+│
+├── .github/workflows
+├── data
+│   ├── raw
+│   └── processed
+├── notebooks
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_detailed_analysis.ipynb
+│   └── 03_insights_recommendations.ipynb
+├── src
 │   ├── config.py
 │   ├── data_loader.py
+│   ├── cleaning.py
 │   ├── analysis.py
 │   ├── visualizations.py
+│   ├── pipeline.py
 │   └── eda_utils.py
-├── tests/                       # pytest test suite
-│   ├── conftest.py
-│   ├── test_data_loader.py
-│   ├── test_visualizations.py
-│   └── test_analysis.py
-├── examples/
-│   └── quick_analysis.py        # Runnable end-to-end example
-├── docs/
-│   ├── API_REFERENCE.md
-│   ├── DATA_DICTIONARY.md
-│   ├── FINDINGS.md
-│   ├── METHODOLOGY.md
-│   ├── QUICK_START.md
-│   └── VISUALIZATIONS.md
-├── reports/                     # Generated charts / outputs
-├── .gitignore
-├── config.yaml
-├── pytest.ini
+├── tests
+├── examples
+│   └── quick_analysis.py
+├── docs
+├── reports
 ├── requirements.txt
 └── README.md
-```
 
----
+⸻
 
-## Quick Start
+Quick Start
 
-```bash
-# 1. Clone
+Clone repository
+
 git clone https://github.com/parakhdvaibhav/CaseStudy_Credit_EDA.git
 cd CaseStudy_Credit_EDA
 
-# 2. Install
+Install dependencies
+
 pip install -r requirements.txt
 
-# 3. Run example (uses synthetic data if real data is absent)
+Run example
+
 python examples/quick_analysis.py
 
-# 4. Run tests
-pytest tests/ -v --cov=src
-```
+Run tests
 
-See [docs/QUICK_START.md](docs/QUICK_START.md) for the full 5-minute setup guide.
+pytest tests/ -v –cov=src
 
----
+⸻
 
-## Using the Utilities
+Run Full EDA Pipeline
 
-```python
-from src.data_loader import load_application_data, validate_data_quality
-from src.analysis import calculate_default_statistics, engineer_features
-from src.visualizations import plot_default_by_income
+from src.pipeline import run_full_eda
 
-df = load_application_data("data/raw/application_data.csv")
-report = validate_data_quality(df)
+result = run_full_eda(
+“data/raw/application_data.csv”,
+output_dir=“reports”
+)
 
-df = engineer_features(df)
+print(result[“default_statistics”])
+
+This runs:
+
+• Data loading
+• Data quality validation
+• Feature engineering
+• Default statistics
+• Visualizations
+• Report generation
+
+⸻
+
+Generated Outputs
+
+reports/
+income_distribution.png
+default_by_income.png
+age_vs_default.png
+correlation_heatmap.png
+
+⸻
+
+Using the Utilities
+
+from src.data_loader import load_application_data
+from src.analysis import calculate_default_statistics
+
+df = load_application_data(“data/raw/application_data.csv”)
 stats = calculate_default_statistics(df)
-print(f"Default rate: {stats['default_rate']:.2%}")
 
-fig = plot_default_by_income(df)
-fig.savefig("reports/default_by_income.png")
-```
+print(stats)
 
-Full function documentation: [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+⸻
 
----
+Key Insights
 
-## Key Insights
+Young applicants default more frequently → Age-based risk scoring
+Unemployed higher risk → Require collateral
+Credit-to-income > 8× risky → Apply credit caps
+Missing occupation correlates with default → Treat missing as risk
+Credit & goods price redundant → Remove multicollinearity
 
-| Finding | Business Action |
-|---------|----------------|
-| Young applicants (20–30) default at 2× average rate | Apply age-based risk tiers |
-| Unemployed / maternity-leave income types are highest risk | Require additional collateral or guarantor |
-| Credit-to-income > 8× strongly predicts default | Hard cap or higher interest for high-ratio loans |
-| Missing occupation data correlates with default | Treat missing occupation as a separate risk category |
-| AMT_CREDIT ↔ AMT_GOODS_PRICE near-perfectly correlated | Use only one in predictive models |
+⸻
 
-See [docs/FINDINGS.md](docs/FINDINGS.md) for the full six-finding breakdown with supporting data.
+Methodology
 
----
+Pipeline:
+	1.	Data ingestion
+	2.	Data cleaning
+	3.	Exploratory analysis
+	4.	Statistical testing
+	5.	Feature engineering
+	6.	Visualization
+	7.	Insight generation
 
-## Documentation
+See docs/METHODOLOGY.md
 
-| Document | Purpose |
-|----------|---------|
-| [docs/QUICK_START.md](docs/QUICK_START.md) | 5-minute setup guide |
-| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Full function documentation |
-| [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) | Feature definitions and data quality notes |
-| [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | End-to-end analytical pipeline |
-| [docs/FINDINGS.md](docs/FINDINGS.md) | Six key risk drivers with business actions |
-| [docs/VISUALIZATIONS.md](docs/VISUALIZATIONS.md) | Chart gallery with commentary |
+⸻
 
----
+Business Context
 
-## Running CI Locally
+The company faces two types of risk:
 
-```bash
-# Lint
-pip install black flake8
-black --check src/ tests/ examples/
-flake8 src/ tests/ examples/ --max-line-length=100
+Lost Business
+Rejecting a customer who would repay
 
-# Test with coverage
-pytest tests/ -v --cov=src --cov-report=term-missing
-```
+Financial Loss
+Approving a customer who defaults
 
----
+EDA helps:
 
-## Business Understanding
+• Improve loan approval decisions
+• Reduce default risk
+• Increase profitable approvals
 
-The loan-providing company faces two types of risk:
+⸻
 
-1. **Lost business** – rejecting an applicant who would have repaid the loan.
-2. **Financial loss** – approving an applicant who defaults.
+Why This Project Matters
 
-Four possible outcomes exist for each application: *Approved*, *Cancelled*, *Refused*, *Unused offer*.  This EDA focuses on identifying applicant attributes that are strong predictors of default so that the company can:
+This project demonstrates:
 
-* Deny high-risk loans
-* Adjust loan amounts or interest rates for borderline applicants
-* Retain creditworthy customers who might otherwise be incorrectly rejected
+• End-to-end data science workflow
+• Production-ready Python utilities
+• Test-driven development
+• Reusable analytics pipeline
+• Business-focused insights
 
----
+⸻
 
-## Business Objectives
+Testing
 
-Identify patterns in applicant and loan attributes that indicate payment difficulties.  The driving factors (driver variables) discovered through EDA can feed directly into credit-scoring and portfolio-risk models.
+pytest tests/ -v –cov=src
 
----
+81 tests currently passing.
 
-## Co-collaborator
+⸻
 
-[Sankalp Seksaria](https://github.com/sankalpseksaria)
+Documentation
+
+QUICK_START.md — Setup guide
+API_REFERENCE.md — Functions
+DATA_DICTIONARY.md — Feature descriptions
+METHODOLOGY.md — Pipeline explanation
+FINDINGS.md — Business insights
+VISUALIZATIONS.md — Chart gallery
+
+⸻
+
+Co-Collaborator
+
+Sankalp Seksaria
+https://github.com/sankalpseksaria
+
+⸻
+
+Future Improvements
+
+• Predictive model
+• Feature importance
+• SHAP explainability
+• Dashboard (Streamlit)

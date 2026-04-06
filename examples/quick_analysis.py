@@ -1,37 +1,32 @@
 #!/usr/bin/env python
 """
-quick_analysis.py
------------------
-Minimal reproducible example showing how to use the CaseStudy_Credit_EDA
-utility modules.
+Quick end-to-end example for the CaseStudy_Credit_EDA project.
 
-Usage
------
+This script demonstrates how to:
+- run the reusable EDA pipeline on the real dataset
+- fall back to a synthetic dataset when no real data is provided
+
+Usage:
     python examples/quick_analysis.py --data data/raw/application_data.csv
-
-If no --data flag is provided the script generates a small synthetic dataset
-so you can verify the pipeline runs end-to-end without the real data.
 """
+
+from __future__ import annotations
 
 import argparse
 import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# matplotlib backend is set by src/visualizations (Agg) when that module is imported.
-
-# Ensure the project root is on the Python path when running from any directory
+# Ensure the project root is available on the import path when the script
+# is executed directly from the examples/ directory.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.analysis import (
-    calculate_default_statistics,
-    calculate_default_rate_by_category,
-    engineer_features,
-)
-from src.data_loader import load_application_data, validate_data_quality
-from src.visualizations import (
+from src.analysis import calculate_default_rate_by_category  # noqa: E402
+from src.pipeline import run_full_eda  # noqa: E402
+from src.visualizations import (  # noqa: E402
     plot_age_vs_default,
     plot_correlation_heatmap,
     plot_default_by_income,
@@ -39,9 +34,12 @@ from src.visualizations import (
 )
 
 
-def _make_synthetic_data(n: int = 500) -> pd.DataFrame:
-    """Return a tiny synthetic dataset that mirrors the real schema."""
+def make_synthetic_data(n: int = 500) -> pd.DataFrame:
+    """
+    Create a synthetic dataset that roughly mirrors the real schema.
+    """
     rng = np.random.default_rng(42)
+
     return pd.DataFrame(
         {
             "SK_ID_CURR": range(1, n + 1),
@@ -53,109 +51,85 @@ def _make_synthetic_data(n: int = 500) -> pd.DataFrame:
             "DAYS_BIRTH": rng.integers(-25_000, -6_000, n),
             "DAYS_EMPLOYED": rng.integers(-10_000, -100, n),
             "NAME_INCOME_TYPE": rng.choice(
-                ["Working", "Commercial associate", "Pensioner", "State servant"], n
+                ["Working", "Commercial associate", "Pensioner", "State servant"],
+                n,
             ),
             "CODE_GENDER": rng.choice(["M", "F"], n),
         }
     )
 
 
-def run(data_path: str = None, output_dir: str = "reports") -> None:
-    """Execute the quick analysis workflow."""
-    os.makedirs(output_dir, exist_ok=True)
+def save_figure(fig, output_path: Path) -> None:
+    """Save a matplotlib figure to disk."""
+    fig.savefig(output_path, dpi=100)
+    print(f"Saved: {output_path}")
 
-    # ------------------------------------------------------------------
-    # 1. Load data
-    # ------------------------------------------------------------------
-    if data_path and os.path.exists(data_path):
-        print(f"Loading data from: {data_path}")
-        df = load_application_data(data_path)
-    else:
-        print("Real data file not found – using synthetic dataset.")
-        df = _make_synthetic_data()
 
+def run_synthetic_demo(output_dir: str = "reports") -> None:
+    """
+    Run a lightweight demo using synthetic data when no real dataset is available.
+    """
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    print("Real data file not found. Using synthetic dataset instead.")
+    df = make_synthetic_data()
     print(f"Dataset shape: {df.shape}")
 
-    # ------------------------------------------------------------------
-    # 2. Data quality report
-    # ------------------------------------------------------------------
-    quality = validate_data_quality(df)
-    print(f"\nData Quality Summary")
-    print(f"  Rows:            {quality['shape'][0]:,}")
-    print(f"  Columns:         {quality['shape'][1]}")
-    print(f"  Duplicate rows:  {quality['duplicate_rows']}")
-    print(
-        f"  High-missing cols (>50%): {len(quality['high_missing_columns'])}"
-    )
+    defaults = int((df["TARGET"] == 1).sum())
+    total = len(df)
+    default_rate = defaults / total if total else 0.0
 
-    # ------------------------------------------------------------------
-    # 3. Default statistics
-    # ------------------------------------------------------------------
-    stats = calculate_default_statistics(df)
-    print(f"\nDefault Statistics")
-    print(f"  Total applications: {stats['total']:,}")
-    print(f"  Defaults:           {stats['defaults']:,}")
-    print(f"  Default rate:       {stats['default_rate']:.2%}")
+    print("\nDefault Statistics")
+    print(f"  Total applications:      {total:,}")
+    print(f"  Defaults:                {defaults:,}")
+    print(f"  Non-defaults:            {total - defaults:,}")
+    print(f"  Default rate:            {default_rate:.2%}")
 
-    # ------------------------------------------------------------------
-    # 4. Feature engineering
-    # ------------------------------------------------------------------
-    df = engineer_features(df)
-    print("\nEngineered features added: AGE_YEARS, EMPLOYMENT_YEARS, "
-          "CREDIT_TO_INCOME, ANNUITY_TO_INCOME")
+    income_rates = calculate_default_rate_by_category(df, "NAME_INCOME_TYPE")
+    print("\nDefault Rates by Income Type")
+    print(income_rates.to_string(index=False))
 
-    # ------------------------------------------------------------------
-    # 5. Default rates by income type
-    # ------------------------------------------------------------------
-    if "NAME_INCOME_TYPE" in df.columns:
-        income_rates = calculate_default_rate_by_category(df, "NAME_INCOME_TYPE")
-        print("\nDefault Rates by Income Type:")
-        print(income_rates.to_string(index=False))
+    fig = plot_distribution(df, "AMT_INCOME_TOTAL")
+    save_figure(fig, output_path / "income_distribution.png")
 
-    # ------------------------------------------------------------------
-    # 6. Visualizations
-    # ------------------------------------------------------------------
-    numeric_cols = ["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY"]
-    existing = [c for c in numeric_cols if c in df.columns]
+    fig = plot_default_by_income(df)
+    save_figure(fig, output_path / "default_by_income.png")
 
-    if existing:
-        fig = plot_distribution(df, existing[0])
-        path = os.path.join(output_dir, "income_distribution.png")
-        fig.savefig(path, dpi=100)
-        print(f"\nSaved: {path}")
+    fig = plot_age_vs_default(df)
+    save_figure(fig, output_path / "age_vs_default.png")
 
-    if "NAME_INCOME_TYPE" in df.columns:
-        fig = plot_default_by_income(df)
-        path = os.path.join(output_dir, "default_by_income.png")
-        fig.savefig(path, dpi=100)
-        print(f"Saved: {path}")
+    fig = plot_correlation_heatmap(df, columns=["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY"])
+    save_figure(fig, output_path / "correlation_heatmap.png")
 
-    if "DAYS_BIRTH" in df.columns:
-        fig = plot_age_vs_default(df)
-        path = os.path.join(output_dir, "age_vs_default.png")
-        fig.savefig(path, dpi=100)
-        print(f"Saved: {path}")
-
-    if len(existing) >= 2:
-        fig = plot_correlation_heatmap(df, columns=existing)
-        path = os.path.join(output_dir, "correlation_heatmap.png")
-        fig.savefig(path, dpi=100)
-        print(f"Saved: {path}")
-
-    print("\nQuick analysis complete.")
+    print("\nSynthetic quick analysis complete.")
 
 
-if __name__ == "__main__":
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Quick Credit EDA analysis")
     parser.add_argument(
         "--data",
         default=None,
-        help="Path to application_data.csv (optional; uses synthetic data if absent)",
+        help="Path to application_data.csv. If omitted, synthetic data is used.",
     )
     parser.add_argument(
         "--output",
         default="reports",
-        help="Directory to save output charts (default: reports/)",
+        help="Directory where output charts will be saved.",
     )
-    args = parser.parse_args()
-    run(data_path=args.data, output_dir=args.output)
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    if args.data and os.path.exists(args.data):
+        result = run_full_eda(args.data, args.output)
+        print("EDA pipeline completed successfully.")
+        print(f"Dataset shape: {result['shape']}")
+        print(f"Saved files: {len(result['saved_files'])}")
+        for file_path in result["saved_files"]:
+            print(f"Saved: {file_path}")
+    else:
+        run_synthetic_demo(args.output)

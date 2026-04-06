@@ -1,7 +1,12 @@
 """
 Visualization utilities for the credit EDA project.
 
-These functions are implemented to satisfy the unit tests in tests/test_visualizations.py.
+This module provides reusable plotting functions for:
+- feature distributions
+- target/default analysis
+- income-based default comparisons
+- age-based default comparisons
+- correlation heatmaps
 """
 
 from __future__ import annotations
@@ -12,6 +17,20 @@ import seaborn as sns
 
 
 def plot_distribution(df: pd.DataFrame, column: str, title: str | None = None):
+    """
+    Plot the distribution of a numeric feature.
+
+    Args:
+        df: Input dataframe.
+        column: Column to visualize.
+        title: Optional chart title.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
+    Raises:
+        ValueError: If the specified column is not found.
+    """
     if column not in df.columns:
         raise ValueError(f"Column '{column}' not found")
 
@@ -25,7 +44,27 @@ def plot_distribution(df: pd.DataFrame, column: str, title: str | None = None):
     return fig
 
 
-def plot_default_analysis(df: pd.DataFrame, feature: str, title: str | None = None, target_col: str = "TARGET"):
+def plot_default_analysis(
+    df: pd.DataFrame,
+    feature: str,
+    title: str | None = None,
+    target_col: str = "TARGET",
+):
+    """
+    Plot target/default distribution across categories of a feature.
+
+    Args:
+        df: Input dataframe.
+        feature: Feature to analyze against the target.
+        title: Optional chart title.
+        target_col: Target column name.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
+    Raises:
+        ValueError: If the target or feature column is missing.
+    """
     if target_col not in df.columns:
         raise ValueError(f"Missing required column: {target_col}")
     if feature not in df.columns:
@@ -40,7 +79,25 @@ def plot_default_analysis(df: pd.DataFrame, feature: str, title: str | None = No
     return fig
 
 
-def plot_correlation_heatmap(df: pd.DataFrame, columns: list[str] | None = None, title: str = "Correlation Heatmap"):
+def plot_correlation_heatmap(
+    df: pd.DataFrame,
+    columns: list[str] | None = None,
+    title: str = "Correlation Heatmap",
+):
+    """
+    Plot a correlation heatmap for numeric columns or a specified subset.
+
+    Args:
+        df: Input dataframe.
+        columns: Optional list of numeric columns to include.
+        title: Chart title.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
+    Raises:
+        ValueError: If no numeric columns are available for correlation analysis.
+    """
     num = df.select_dtypes(include=["int64", "float64"])
     if columns is not None:
         num = num[[c for c in columns if c in num.columns]]
@@ -65,10 +122,23 @@ def plot_default_by_income(
     target_col: str = "TARGET",
 ):
     """
-    Required by tests:
-      - If TARGET missing -> raise ValueError mentioning TARGET
-      - If income_column is default ("INCOME_GROUP") and not present -> fallback to binning AMT_INCOME_TOTAL
-      - If income_column is explicitly provided (not "INCOME_GROUP") and missing -> raise ValueError "not found"
+    Plot default rate by income group.
+
+    If the default income grouping column is not present, the function
+    derives income bins from `AMT_INCOME_TOTAL`.
+
+    Args:
+        df: Input dataframe.
+        income_column: Income grouping column.
+        title: Optional chart title.
+        target_col: Target column name.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
+    Raises:
+        ValueError: If the target column is missing, or if the required
+        income information is unavailable.
     """
     if target_col not in df.columns:
         raise ValueError(f"Missing required column: {target_col}")
@@ -102,6 +172,23 @@ def plot_age_vs_default(
     title: str | None = None,
     target_col: str = "TARGET",
 ):
+    """
+    Plot age distribution segmented by target/default outcome.
+
+    If the default age column is not present, age is derived from `DAYS_BIRTH`.
+
+    Args:
+        df: Input dataframe.
+        age_column: Age column name.
+        title: Optional chart title.
+        target_col: Target column name.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     if target_col not in df.columns:
         raise ValueError(f"Missing required column: {target_col}")
 
@@ -123,6 +210,17 @@ def plot_age_vs_default(
 
 
 def plot_target_count(df: pd.DataFrame, target_col: str = "TARGET", title: str = "Target distribution"):
+    """
+    Plot the count of each target class.
+
+    Args:
+        df: Input dataframe.
+        target_col: Target column name.
+        title: Chart title.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+    """
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.countplot(x=target_col, data=df, ax=ax)
     ax.set_title(title)

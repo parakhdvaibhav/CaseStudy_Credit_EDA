@@ -1,11 +1,12 @@
 """
 Analysis utilities for the credit EDA project.
 
-This module contains:
-- Legacy test-compatible analytics helpers
-- Missingness and default-rate analytics
-- Correlation helpers
-- A legacy feature engineering helper used by tests
+This module provides reusable helpers for:
+- missing-value analysis
+- target/default-rate summary statistics
+- category-level default analysis
+- correlation analysis
+- feature engineering for exploratory analysis
 """
 
 from __future__ import annotations
@@ -26,17 +27,13 @@ def calculate_missing_percentages(df: pd.DataFrame) -> pd.Series:
 
 def calculate_default_statistics(df: pd.DataFrame, target_col: str = "TARGET") -> dict:
     """
-    Return summary statistics about default target.
+    Return summary statistics for the target default variable.
 
-    Expected keys (per tests):
-      - total
-      - defaults
-      - non_defaults
-      - default_rate
-      - non_default_rate
+    Returns total records, default counts, non-default counts,
+    and their corresponding rates.
 
     Raises:
-      - KeyError if target column is missing.
+        KeyError: If the target column is missing.
     """
     if target_col not in df.columns:
         raise KeyError(target_col)
@@ -63,14 +60,14 @@ def calculate_default_rate_by_category(
     target_col: str = "TARGET",
 ) -> pd.DataFrame:
     """
-    Default rate (mean of TARGET) grouped by a categorical column.
+    Return default rate grouped by a categorical column.
 
-    Returns a dataframe with columns:
-      - <category_col>
-      - default_rate
-      - count
+    The result includes:
+    - the category column
+    - default_rate
+    - count
 
-    Sorted by default_rate descending (per tests).
+    Rows are sorted by default rate in descending order.
     """
     if target_col not in df.columns:
         raise KeyError(target_col)
@@ -88,10 +85,9 @@ def calculate_correlation_matrix(
     drop_cols: Tuple[str, ...] = ("SK_ID_CURR", "TARGET"),
 ) -> pd.DataFrame:
     """
-    Return correlation matrix for numeric columns (or provided subset).
+    Return a correlation matrix for numeric columns or a provided subset.
 
-    The test suite calls:
-        calculate_correlation_matrix(df, columns=[...])
+    Non-numeric columns and excluded identifier/target columns are ignored.
     """
     if columns is None:
         columns = list(df.select_dtypes(include=["int64", "float64"]).columns)
@@ -109,12 +105,10 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
     """
     Compute correlations on numeric columns and return highly correlated feature pairs.
 
-    Tests pass a *dataframe* (not a precomputed correlation matrix).
-
-    Returns columns:
-      - feature_1
-      - feature_2
-      - correlation
+    Returns a dataframe with:
+    - feature_1
+    - feature_2
+    - correlation
     """
     num = df.select_dtypes(include=["int64", "float64"])
     if num.shape[1] < 2:
@@ -139,13 +133,12 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
 
 def calculate_missing_by_target(df: pd.DataFrame, target_col: str = "TARGET") -> pd.DataFrame:
     """
-    Long-format missing % by target.
+    Return missing-value percentages by target class in long format.
 
-    IMPORTANT (per tests):
-      - result must include a column literally named "TARGET"
-      - result must include "missing_pct"
-
-    Note: Even if caller passes a different target_col, we still output the column name "TARGET".
+    The output includes:
+    - TARGET
+    - feature
+    - missing_pct
     """
     if target_col not in df.columns:
         raise KeyError(target_col)
@@ -164,15 +157,15 @@ def calculate_missing_by_target(df: pd.DataFrame, target_col: str = "TARGET") ->
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Legacy feature engineering function expected by tests.
+    Create derived features used in exploratory credit-risk analysis.
 
-    Must add:
-      - AGE_YEARS
-      - EMPLOYMENT_YEARS
-      - CREDIT_TO_INCOME
-      - ANNUITY_TO_INCOME
+    Adds:
+    - AGE_YEARS
+    - EMPLOYMENT_YEARS
+    - CREDIT_TO_INCOME
+    - ANNUITY_TO_INCOME
 
-    And: for Pensioners / special employed code, EMPLOYMENT_YEARS should be NaN.
+    For pensioners or anomalous employment codes, employment years are set to NaN.
     """
     out = df.copy()
 
@@ -212,12 +205,14 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_by_target(df: pd.DataFrame, target_col: str = "TARGET") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split the dataframe into non-default and default subsets."""
     if target_col not in df.columns:
         raise KeyError(target_col)
     return df[df[target_col] == 0].copy(), df[df[target_col] == 1].copy()
 
 
 def target_distribution(df: pd.DataFrame, target_col: str = "TARGET") -> dict:
+    """Return counts and percentages for each target class."""
     if target_col not in df.columns:
         raise KeyError(target_col)
     total = len(df)
@@ -233,6 +228,7 @@ def target_distribution(df: pd.DataFrame, target_col: str = "TARGET") -> dict:
 
 
 def correlation_matrices(target_0: pd.DataFrame, target_1: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return separate correlation matrices for non-default and default subsets."""
     cor0 = calculate_correlation_matrix(target_0)
     cor1 = calculate_correlation_matrix(target_1)
     return cor0, cor1

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,14 @@ from .config import NUMERIC_COLUMNS_NOTEBOOK, CleaningConfig, default_cleaning_c
 
 def drop_high_null_columns(df: pd.DataFrame, threshold_pct: float) -> pd.DataFrame:
     """
-    Drop columns whose percentage of null values is > threshold_pct.
+    Drop columns whose percentage of missing values exceeds the threshold.
+
+    Args:
+        df: Input dataframe.
+        threshold_pct: Maximum allowed missing-value percentage.
+
+    Returns:
+        pd.DataFrame: Dataframe with high-null columns removed.
     """
     null_pct = df.isnull().mean() * 100
     to_drop = list(null_pct[null_pct > threshold_pct].index)
@@ -19,7 +26,14 @@ def drop_high_null_columns(df: pd.DataFrame, threshold_pct: float) -> pd.DataFra
 
 def drop_columns_by_prefix(df: pd.DataFrame, prefixes: Sequence[str]) -> pd.DataFrame:
     """
-    Drop columns starting with any of the provided prefixes.
+    Drop columns whose names start with any of the provided prefixes.
+
+    Args:
+        df: Input dataframe.
+        prefixes: Prefix patterns used to identify columns for removal.
+
+    Returns:
+        pd.DataFrame: Dataframe with matching columns removed.
     """
     cols = list(df.columns)
     to_drop = [c for c in cols if any(c.startswith(p) for p in prefixes)]
@@ -28,25 +42,55 @@ def drop_columns_by_prefix(df: pd.DataFrame, prefixes: Sequence[str]) -> pd.Data
 
 def drop_flag_document_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Drop FLAG_DOCUMENT_* columns (the notebook drops these as not useful for analysis).
+    Drop all columns matching the `FLAG_DOCUMENT_*` pattern.
+
+    These columns are excluded to simplify exploratory analysis.
+
+    Args:
+        df: Input dataframe.
+
+    Returns:
+        pd.DataFrame: Dataframe without document-flag columns.
     """
     cols = [c for c in df.columns if c.startswith("FLAG_DOCUMENT_")]
     return df.drop(columns=cols, errors="ignore")
 
 
 def drop_explicit_columns(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
+    """
+    Drop a specified list of columns.
+
+    Args:
+        df: Input dataframe.
+        columns: Columns to remove.
+
+    Returns:
+        pd.DataFrame: Dataframe with selected columns removed.
+    """
     return df.drop(columns=list(columns), errors="ignore")
 
 
 def convert_negative_days_to_years(
-    df: pd.DataFrame, days_column: str, new_column: str
+    df: pd.DataFrame,
+    days_column: str,
+    new_column: str,
 ) -> pd.DataFrame:
     """
-    Notebook logic:
-      - take abs() of DAYS_* columns
-      - integer divide by 365
-      - round
-      - rename to new semantic column
+    Convert a negative day-based column into approximate years and rename it.
+
+    The transformation:
+    - converts values to absolute
+    - converts days to years using integer division by 365
+    - rounds the result
+    - renames the source column
+
+    Args:
+        df: Input dataframe.
+        days_column: Source day-based column.
+        new_column: New human-readable column name.
+
+    Returns:
+        pd.DataFrame: Transformed dataframe.
     """
     out = df.copy()
     if days_column not in out.columns:
@@ -60,7 +104,13 @@ def convert_negative_days_to_years(
 
 def fix_gender_xna(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Notebook logic: replace CODE_GENDER=='XNA' with 'F'.
+    Replace anomalous `CODE_GENDER == 'XNA'` values with `'F'`.
+
+    Args:
+        df: Input dataframe.
+
+    Returns:
+        pd.DataFrame: Cleaned dataframe.
     """
     out = df.copy()
     if "CODE_GENDER" in out.columns:
@@ -69,10 +119,22 @@ def fix_gender_xna(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def trim_outliers_quantile(
-    df: pd.DataFrame, columns: Sequence[str], quantile: float = 0.99
+    df: pd.DataFrame,
+    columns: Sequence[str],
+    quantile: float = 0.99,
 ) -> pd.DataFrame:
     """
-    Remove rows above quantile for each column (iteratively) as per notebook.
+    Remove rows above the specified quantile for each selected column.
+
+    Outlier filtering is applied iteratively column by column.
+
+    Args:
+        df: Input dataframe.
+        columns: Columns used for outlier trimming.
+        quantile: Upper quantile threshold.
+
+    Returns:
+        pd.DataFrame: Filtered dataframe.
     """
     out = df.copy()
     for col in columns:
@@ -91,16 +153,29 @@ def add_income_and_loan_groups(
     loan_labels: Sequence[str],
 ) -> pd.DataFrame:
     """
-    Add INCOME_GROUP and LOAN_GROUP columns via pd.cut and insert them
-    near the start of the dataframe (matching notebook intent).
+    Add categorical income and loan group columns using predefined bins.
+
+    The derived columns are inserted near the start of the dataframe
+    to keep important segmentation variables prominent.
+
+    Args:
+        df: Input dataframe.
+        income_bins: Bin edges for income grouping.
+        income_labels: Labels for income bins.
+        loan_bins: Bin edges for loan grouping.
+        loan_labels: Labels for loan bins.
+
+    Returns:
+        pd.DataFrame: Dataframe with derived grouping columns.
     """
     out = df.copy()
 
     if "AMT_INCOME_TOTAL" in out.columns:
         out["INCOME_GROUP"] = pd.cut(
-            x=out["AMT_INCOME_TOTAL"], bins=list(income_bins), labels=list(income_labels)
+            x=out["AMT_INCOME_TOTAL"],
+            bins=list(income_bins),
+            labels=list(income_labels),
         )
-        # insert after TARGET if present
         if "TARGET" in out.columns:
             mid = out["INCOME_GROUP"]
             out = out.drop(columns=["INCOME_GROUP"])
@@ -108,18 +183,31 @@ def add_income_and_loan_groups(
 
     if "AMT_CREDIT" in out.columns:
         out["LOAN_GROUP"] = pd.cut(
-            x=out["AMT_CREDIT"], bins=list(loan_bins), labels=list(loan_labels)
+            x=out["AMT_CREDIT"],
+            bins=list(loan_bins),
+            labels=list(loan_labels),
         )
         if "INCOME_GROUP" in out.columns:
             mid = out["LOAN_GROUP"]
             out = out.drop(columns=["LOAN_GROUP"])
-            # after INCOME_GROUP (which is at index 2)
             out.insert(3, "LOAN_GROUP", mid)
 
     return out
 
 
 def cast_numeric_columns(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
+    """
+    Cast selected columns to numeric dtype where possible.
+
+    Non-convertible values are coerced to NaN.
+
+    Args:
+        df: Input dataframe.
+        columns: Candidate numeric columns.
+
+    Returns:
+        pd.DataFrame: Dataframe with numeric casting applied.
+    """
     out = df.copy()
     cols_present = [c for c in columns if c in out.columns]
     if cols_present:
@@ -128,39 +216,45 @@ def cast_numeric_columns(df: pd.DataFrame, columns: Sequence[str]) -> pd.DataFra
 
 
 def clean_current_application(
-    curr_appl: pd.DataFrame, cfg: Optional[CleaningConfig] = None
+    curr_appl: pd.DataFrame,
+    cfg: Optional[CleaningConfig] = None,
 ) -> pd.DataFrame:
     """
-    End-to-end cleaning pipeline for current application dataset,
-    based on the original notebook.
+    Run the end-to-end cleaning pipeline for the current application dataset.
+
+    The pipeline performs:
+    - high-null column removal
+    - prefix-based column removal
+    - document flag cleanup
+    - explicit column removal
+    - conversion of day-based columns into years
+    - categorical cleanup for gender anomalies
+    - quantile-based outlier trimming
+    - creation of income and loan group features
+    - numeric type standardization
+
+    Args:
+        curr_appl: Raw current application dataframe.
+        cfg: Optional cleaning configuration. If omitted, default settings are used.
+
+    Returns:
+        pd.DataFrame: Cleaned application dataframe.
     """
     cfg = cfg or default_cleaning_config()
 
     df = curr_appl.copy()
 
-    # Step 1: Drop columns with > 50% nulls
     df = drop_high_null_columns(df, threshold_pct=cfg.high_null_threshold_pct)
-
-    # Step 2: Drop columns by prefix pattern (OBS_, DEF_, AMT_REQ_CREDIT..., EXT_..., etc.)
     df = drop_columns_by_prefix(df, prefixes=cfg.drop_prefixes)
-
-    # Step 3: Drop FLAG_DOCUMENT_* columns
     df = drop_flag_document_columns(df)
-
-    # Step 4: Drop explicit columns listed in notebook
     df = drop_explicit_columns(df, cfg.drop_explicit)
 
-    # Step 5: Convert negative day columns to years + rename
     for days_col, new_col in cfg.days_to_years_map.items():
         df = convert_negative_days_to_years(df, days_col, new_col)
 
-    # Step 6: Fix gender
     df = fix_gender_xna(df)
-
-    # Step 7: Outlier trimming
     df = trim_outliers_quantile(df, cfg.outlier_columns, quantile=cfg.outlier_quantile)
 
-    # Step 8: Create bins
     df = add_income_and_loan_groups(
         df,
         income_bins=cfg.income_bins,
@@ -169,7 +263,6 @@ def clean_current_application(
         loan_labels=cfg.loan_labels,
     )
 
-    # Step 9: Cast numerics
     df = cast_numeric_columns(df, NUMERIC_COLUMNS_NOTEBOOK)
 
     return df
