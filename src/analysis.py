@@ -101,7 +101,9 @@ def calculate_correlation_matrix(
     return df[cols].corr(numeric_only=True)
 
 
-def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.DataFrame:
+def get_highly_correlated_pairs(
+    df: pd.DataFrame, threshold: float = 0.8
+) -> pd.DataFrame:
     """
     Compute correlations on numeric columns and return highly correlated feature pairs.
 
@@ -123,7 +125,9 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
             c1, c2 = cols[i], cols[j]
             val = corr.iloc[i, j]
             if pd.notna(val) and abs(val) >= threshold:
-                rows.append({"feature_1": c1, "feature_2": c2, "correlation": float(val)})
+                rows.append(
+                    {"feature_1": c1, "feature_2": c2, "correlation": float(val)}
+                )
 
     out = pd.DataFrame(rows, columns=["feature_1", "feature_2", "correlation"])
     if not out.empty:
@@ -131,7 +135,9 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
     return out
 
 
-def calculate_missing_by_target(df: pd.DataFrame, target_col: str = "TARGET") -> pd.DataFrame:
+def calculate_missing_by_target(
+    df: pd.DataFrame, target_col: str = "TARGET"
+) -> pd.DataFrame:
     """
     Return missing-value percentages by target class in long format.
 
@@ -204,7 +210,9 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def split_by_target(df: pd.DataFrame, target_col: str = "TARGET") -> tuple[pd.DataFrame, pd.DataFrame]:
+def split_by_target(
+    df: pd.DataFrame, target_col: str = "TARGET"
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split the dataframe into non-default and default subsets."""
     if target_col not in df.columns:
         raise KeyError(target_col)
@@ -227,7 +235,9 @@ def target_distribution(df: pd.DataFrame, target_col: str = "TARGET") -> dict:
     }
 
 
-def correlation_matrices(target_0: pd.DataFrame, target_1: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def correlation_matrices(
+    target_0: pd.DataFrame, target_1: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return separate correlation matrices for non-default and default subsets."""
     cor0 = calculate_correlation_matrix(target_0)
     cor1 = calculate_correlation_matrix(target_1)

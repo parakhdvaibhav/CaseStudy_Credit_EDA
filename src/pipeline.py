@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pandas as pd
-
 from .analysis import (
     calculate_default_rate_by_category,
     calculate_default_statistics,
