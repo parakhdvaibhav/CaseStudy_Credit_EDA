@@ -2,13 +2,11 @@
 Unit tests for src/visualizations.py
 """
 
-import matplotlib
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytest
-
-matplotlib.use("Agg")
 
 from src.visualizations import (
     plot_age_vs_default,
@@ -17,7 +15,6 @@ from src.visualizations import (
     plot_default_by_income,
     plot_distribution,
 )
-
 
 # ---------------------------------------------------------------------------
 # plot_distribution
@@ -37,7 +34,9 @@ class TestPlotDistribution:
         plt.close("all")
 
     def test_custom_title(self, sample_application_df):
-        fig = plot_distribution(sample_application_df, "AMT_INCOME_TOTAL", title="My Title")
+        fig = plot_distribution(
+            sample_application_df, "AMT_INCOME_TOTAL", title="My Title"
+        )
         ax = fig.axes[0]
         assert ax.get_title() == "My Title"
         plt.close("all")

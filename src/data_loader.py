@@ -9,7 +9,7 @@ This module provides reusable utilities for:
 """
 
 from __future__ import annotations
-
+import os
 from typing import Tuple, Union
 
 import pandas as pd
@@ -117,7 +117,9 @@ def get_missing_summary(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0) -> dict:
+def validate_data_quality(
+    df: pd.DataFrame, high_missing_threshold: float = 50.0
+) -> dict:
     """
     Generate a structured data-quality report for the input dataframe.
 
@@ -139,7 +141,9 @@ def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0
     """
     missing_counts = df.isnull().sum()
     missing_percentages = df.isnull().mean() * 100.0
-    high_missing_columns = list(missing_percentages[missing_percentages > high_missing_threshold].index)
+    high_missing_columns = list(
+        missing_percentages[missing_percentages > high_missing_threshold].index
+    )
 
     report = {
         "shape": df.shape,
@@ -153,7 +157,9 @@ def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0
     return report
 
 
-def validate_required_columns(df: pd.DataFrame, required_columns: Tuple[str, ...]) -> None:
+def validate_required_columns(
+    df: pd.DataFrame, required_columns: Tuple[str, ...]
+) -> None:
     """
     Validate that all required columns are present in the dataframe.
 
@@ -169,7 +175,9 @@ def validate_required_columns(df: pd.DataFrame, required_columns: Tuple[str, ...
         raise ValueError(f"Missing required columns: {missing}")
 
 
-def load_credit_datasets(application_path: PathLike, previous_path: PathLike) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_credit_datasets(
+    application_path: PathLike, previous_path: PathLike
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Load both application and previous-application datasets.
 
@@ -180,4 +188,6 @@ def load_credit_datasets(application_path: PathLike, previous_path: PathLike) ->
     Returns:
         tuple[pd.DataFrame, pd.DataFrame]: Loaded application and previous-application dataframes.
     """
-    return load_application_data(application_path), load_previous_application(previous_path)
+    return load_application_data(application_path), load_previous_application(
+        previous_path
+    )

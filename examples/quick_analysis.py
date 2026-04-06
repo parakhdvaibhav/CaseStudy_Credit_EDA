@@ -99,7 +99,9 @@ def run_synthetic_demo(output_dir: str = "reports") -> None:
     fig = plot_age_vs_default(df)
     save_figure(fig, output_path / "age_vs_default.png")
 
-    fig = plot_correlation_heatmap(df, columns=["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY"])
+    fig = plot_correlation_heatmap(
+        df, columns=["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY"]
+    )
     save_figure(fig, output_path / "correlation_heatmap.png")
 
     print("\nSynthetic quick analysis complete.")

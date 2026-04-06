@@ -149,7 +149,9 @@ def plot_default_by_income(
                 raise ValueError(f"Column '{income_column}' not found")
             tmp = df.copy()
             income_column = "__INCOME_BIN__"
-            tmp[income_column] = pd.qcut(tmp["AMT_INCOME_TOTAL"], q=4, duplicates="drop")
+            tmp[income_column] = pd.qcut(
+                tmp["AMT_INCOME_TOTAL"], q=4, duplicates="drop"
+            )
             df = tmp
         else:
             raise ValueError(f"Column '{income_column}' not found")
@@ -209,7 +211,9 @@ def plot_age_vs_default(
     return fig
 
 
-def plot_target_count(df: pd.DataFrame, target_col: str = "TARGET", title: str = "Target distribution"):
+def plot_target_count(
+    df: pd.DataFrame, target_col: str = "TARGET", title: str = "Target distribution"
+):
     """
     Plot the count of each target class.
 
