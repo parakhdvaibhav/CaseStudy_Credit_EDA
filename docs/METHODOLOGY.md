@@ -2,7 +2,22 @@
 
 ## Overview
 
-This document describes the end-to-end analytical pipeline used to explore the Home Credit Default Risk dataset, from raw data ingestion through to insight generation.
+This document describes the end-to-end analytical pipeline used to explore the Home Credit Default Risk dataset, from raw data ingestion through insight generation. The pipeline is modular, reproducible, and implemented using reusable utilities in the `src/` directory.
+
+---
+
+## Pipeline Flow
+
+The overall pipeline follows this sequence:
+
+1. Data Ingestion (`data_loader.py`)
+2. Data Cleaning (`cleaning.py`)
+3. Exploratory Analysis (`analysis.py`)
+4. Visualization (`visualizations.py`)
+5. Feature Engineering (`analysis.py`)
+6. Insight Generation (Notebooks + Reports)
+
+This modular design improves maintainability, testing, and reproducibility.
 
 ---
 
@@ -11,28 +26,32 @@ This document describes the end-to-end analytical pipeline used to explore the H
 **Tool:** `src/data_loader.py`
 
 **Steps:**
-1. Load `application_data.csv` and (optionally) `previous_application.csv` using `pandas.read_csv`.
-2. Assert minimum shape requirements: ≥ 100 rows, ≥ 5 columns.
-3. Validate that `TARGET` column exists and contains only {0, 1}.
+1. Load `application_data.csv` using `pandas.read_csv`
+2. Validate dataset structure and required columns
+3. Validate that `TARGET` column exists and contains only {0, 1}
 4. Run `validate_data_quality()` to produce a structured quality report:
    - Missing value counts and percentages per column
-   - Columns exceeding the 50% missing-value threshold (`DEFAULT_MISSING_THRESHOLD`)
+   - Columns exceeding the missing-value threshold
    - Duplicate row count
+   - Basic dataset shape and column metadata
 
-**Configuration:** All paths and thresholds are managed centrally in `src/config.py`.
+**Configuration:** Paths and thresholds are managed in `src/config.py`.
 
 ---
 
 ## 2. Data Cleaning
 
-**Tool:** `src/data_loader.py → clean_data()`
+Cleaning operations are designed to be idempotent and reusable across analysis workflows.
+
+**Tool:** `src/cleaning.py`
 
 | Step | Description |
 |------|-------------|
-| Drop high-missing columns | Remove columns where `missing_pct > DEFAULT_MISSING_THRESHOLD` (default 50%) |
-| Encode `DAYS_EMPLOYED` anomaly | Replace `365243` (pensioner sentinel value) with `NaN`; add `IS_PENSIONER` flag |
-| Handle negative day values | `DAYS_BIRTH`, `DAYS_EMPLOYED` are stored as negative integers — convert to positive for readability |
-| Remove duplicates | Drop fully duplicate rows |
+| Drop high-missing columns | Remove columns exceeding configured missing threshold |
+| Handle sentinel values | Replace anomalous values such as `365243` in `DAYS_EMPLOYED` |
+| Convert day-based variables | Convert negative day values to human-readable units |
+| Remove duplicates | Drop duplicate records |
+| Standardize numeric features | Handle invalid or extreme values |
 
 ---
 
@@ -40,35 +59,36 @@ This document describes the end-to-end analytical pipeline used to explore the H
 
 ### 3.1 Univariate Analysis
 
-**Tool:** `src/analysis.py → calculate_default_statistics()`
+**Tool:** `src/analysis.py`
 
 - Overall default rate calculation (`TARGET.mean()`)
-- Distribution plots for all `KEY_NUMERIC_COLUMNS` (histograms + KDE)
-- Frequency tables for all `KEY_CATEGORICAL_COLUMNS`
-- Missing-value heatmap across all 122 columns
+- Distribution plots for numeric variables
+- Frequency tables for categorical variables
+- Missing value analysis
 
 ### 3.2 Bivariate Analysis
 
-**Tool:** `src/analysis.py`, `src/eda_utils.py`
+**Tool:** `src/analysis.py`, `src/visualizations.py`
 
-- **Numerical vs. Target:** Box plots and violin plots comparing defaulters vs. non-defaulters across all numeric features
-- **Categorical vs. Target:** Grouped bar charts showing default rate by category
-- **Key computed ratios:**
-  - `CREDIT_TO_INCOME = AMT_CREDIT / AMT_INCOME_TOTAL`
-  - `ANNUITY_TO_INCOME = AMT_ANNUITY / AMT_INCOME_TOTAL`
-  - `INCOME_PER_PERSON = AMT_INCOME_TOTAL / CNT_FAM_MEMBERS`
+- Numerical vs Target analysis
+- Categorical vs Target analysis
+- Default rate by key demographic and financial features
+
+Key engineered ratios:
+
+- `CREDIT_TO_INCOME`
+- `ANNUITY_TO_INCOME`
+- `INCOME_PER_PERSON`
 
 ### 3.3 Multivariate Analysis
 
-**Tool:** `src/analysis.py → compute_correlation_matrix()`
+**Tool:** `src/analysis.py`
 
-- Pearson correlation matrix for all numeric features
-- Flag pairs with |r| > `CORRELATION_THRESHOLD` (default 0.70) as candidates for removal
-- Notable finding: `AMT_CREDIT` ↔ `AMT_GOODS_PRICE` (r ≈ 0.99)
+- Correlation matrix for numeric features
+- Identification of multicollinearity
+- Feature grouping and redundancy detection
 
----
-
-## 4. Statistical Tests
+### 4. Exploratory Statistical Analysis
 
 | Test | Purpose | Implementation |
 |------|---------|---------------|
@@ -82,7 +102,7 @@ This document describes the end-to-end analytical pipeline used to explore the H
 
 ## 5. Feature Engineering
 
-**Tool:** `src/analysis.py → engineer_features()`
+**Tool:** `src/analysis.py`
 
 | Feature | Formula | Rationale |
 |---------|---------|-----------|
@@ -100,20 +120,16 @@ Division-by-zero is handled: `CNT_FAM_MEMBERS` defaults to 1 where zero or missi
 
 **Tool:** `src/visualizations.py`
 
-All plot functions:
-- Accept a DataFrame and return a `matplotlib.figure.Figure`
-- Use project-wide style constants from `src/config.py` (`FIGURE_SIZE`, `COLOR_PALETTE`)
-- Are independently testable (no global state)
+Visualization utilities generate:
 
-| Function | Chart Type | Purpose |
-|----------|-----------|---------|
-| `plot_missing_values()` | Horizontal bar | Missing-value audit |
-| `plot_target_distribution()` | Pie / donut | Class imbalance overview |
-| `plot_numerical_distributions()` | Histogram grid | Understand spread and skew |
-| `plot_default_by_income()` | Bar + error bars | Default rate by income type |
-| `plot_correlation_heatmap()` | Heatmap | Feature correlation matrix |
-| `plot_age_vs_default()` | Line chart | Age cohort risk profile |
-| `plot_credit_to_income()` | Box plot | Credit-to-income distribution |
+- Distribution plots
+- Target distribution plots
+- Default rate by demographic variables
+- Correlation heatmap
+- Age vs default plots
+- Credit-to-income visualizations
+
+Plots are generated using matplotlib and seaborn and saved to `reports/`.
 
 ---
 
@@ -150,4 +166,4 @@ Random seeds are not required because this pipeline contains no stochastic opera
 | EDA only; no predictive model built | Cannot quantify feature importance precisely | Use findings to design features for ML model |
 | Class imbalance (~8% default rate) | Visualizations can overstate non-default patterns | Reported separately for each class; SMOTE recommended for modeling |
 | Missing data (65 cols > 30% missing) | Imputation may introduce bias | Conservative approach: dropped >50% missing; flagged >30% missing |
-| No temporal validation | Patterns may shift over time | Recommend time-based train/test split in production |
+| No temporal validation | Patterns may shift over time | Recommend time-based train/test split in production 
