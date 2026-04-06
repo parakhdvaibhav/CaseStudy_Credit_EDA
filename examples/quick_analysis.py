@@ -25,13 +25,13 @@ import pandas as pd
 # Ensure the project root is on the Python path when running from any directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.analysis import (  # noqa: E402
+from src.analysis import (
     calculate_default_statistics,
     calculate_default_rate_by_category,
     engineer_features,
 )
-from src.data_loader import load_application_data, validate_data_quality  # noqa: E402
-from src.visualizations import (  # noqa: E402
+from src.data_loader import load_application_data, validate_data_quality
+from src.visualizations import (
     plot_age_vs_default,
     plot_correlation_heatmap,
     plot_default_by_income,
@@ -80,17 +80,19 @@ def run(data_path: str = None, output_dir: str = "reports") -> None:
     # 2. Data quality report
     # ------------------------------------------------------------------
     quality = validate_data_quality(df)
-    print("\nData Quality Summary")
+    print(f"\nData Quality Summary")
     print(f"  Rows:            {quality['shape'][0]:,}")
     print(f"  Columns:         {quality['shape'][1]}")
     print(f"  Duplicate rows:  {quality['duplicate_rows']}")
-    print(f"  High-missing cols (>50%): {len(quality['high_missing_columns'])}")
+    print(
+        f"  High-missing cols (>50%): {len(quality['high_missing_columns'])}"
+    )
 
     # ------------------------------------------------------------------
     # 3. Default statistics
     # ------------------------------------------------------------------
     stats = calculate_default_statistics(df)
-    print("\nDefault Statistics")
+    print(f"\nDefault Statistics")
     print(f"  Total applications: {stats['total']:,}")
     print(f"  Defaults:           {stats['defaults']:,}")
     print(f"  Default rate:       {stats['default_rate']:.2%}")
@@ -99,10 +101,8 @@ def run(data_path: str = None, output_dir: str = "reports") -> None:
     # 4. Feature engineering
     # ------------------------------------------------------------------
     df = engineer_features(df)
-    print(
-        "\nEngineered features added: AGE_YEARS, EMPLOYMENT_YEARS, "
-        "CREDIT_TO_INCOME, ANNUITY_TO_INCOME"
-    )
+    print("\nEngineered features added: AGE_YEARS, EMPLOYMENT_YEARS, "
+          "CREDIT_TO_INCOME, ANNUITY_TO_INCOME")
 
     # ------------------------------------------------------------------
     # 5. Default rates by income type

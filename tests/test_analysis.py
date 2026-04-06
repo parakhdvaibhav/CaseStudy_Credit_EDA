@@ -2,6 +2,7 @@
 Unit tests for src/analysis.py
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -14,6 +15,7 @@ from src.analysis import (
     engineer_features,
     get_highly_correlated_pairs,
 )
+
 
 # ---------------------------------------------------------------------------
 # calculate_missing_percentages
@@ -53,13 +55,7 @@ class TestCalculateDefaultStatistics:
 
     def test_required_keys(self, sample_application_df):
         result = calculate_default_statistics(sample_application_df)
-        for key in (
-            "total",
-            "defaults",
-            "non_defaults",
-            "default_rate",
-            "non_default_rate",
-        ):
+        for key in ("total", "defaults", "non_defaults", "default_rate", "non_default_rate"):
             assert key in result
 
     def test_total_equals_sum(self, sample_application_df):
@@ -224,12 +220,7 @@ class TestEngineerFeatures:
         df = pd.DataFrame({"A": [1, 2, 3]})
         result = engineer_features(df)
         # None of the feature-engineering columns should be added
-        for col in (
-            "AGE_YEARS",
-            "EMPLOYMENT_YEARS",
-            "CREDIT_TO_INCOME",
-            "ANNUITY_TO_INCOME",
-        ):
+        for col in ("AGE_YEARS", "EMPLOYMENT_YEARS", "CREDIT_TO_INCOME", "ANNUITY_TO_INCOME"):
             assert col not in result.columns
 
     def test_pensioner_employment_years_is_nan(self, sample_application_df):

@@ -1,195 +1,115 @@
 """
-Data loading and validation utilities for the Credit EDA project.
+Data loading and data quality helpers for the credit EDA project.
 """
 
-import logging
-import os
+from __future__ import annotations
+
+from typing import Tuple, Union
 
 import pandas as pd
 
-from src.config import (
-    APPLICATION_DATA_FILE,
-    DATA_RAW_PATH,
-    DEFAULT_MISSING_THRESHOLD,
-    PREVIOUS_APPLICATION_FILE,
-    TARGET_COLUMN,
-)
-
-logger = logging.getLogger(__name__)
+PathLike = Union[str, "os.PathLike[str]"]
 
 
-def load_application_data(filepath: str = None) -> pd.DataFrame:
-    """Load and return the main application dataset.
+def load_csv(path: PathLike) -> pd.DataFrame:
+    # Let pandas raise FileNotFoundError naturally if missing.
+    return pd.read_csv(path)
 
-    Parameters
-    ----------
-    filepath:
-        Path to the CSV file.  Defaults to the configured raw data path.
 
-    Returns
-    -------
-    pd.DataFrame
-        The loaded application data.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the file does not exist at *filepath*.
-    ValueError
-        If the loaded DataFrame is empty.
+def load_application_data(path: PathLike) -> pd.DataFrame:
     """
-    if filepath is None:
-        filepath = os.path.join(DATA_RAW_PATH, APPLICATION_DATA_FILE)
+    Load the main application_data CSV.
 
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"Application data file not found: {filepath}")
-
-    df = pd.read_csv(filepath)
-
+    Tests require:
+      - FileNotFoundError for missing file
+      - ValueError with 'empty' in message for header-only CSV
+    """
+    df = load_csv(path)
     if df.empty:
-        raise ValueError(f"Loaded DataFrame is empty: {filepath}")
-
-    logger.info("Loaded application data: %d rows, %d columns", *df.shape)
+        raise ValueError("empty")
     return df
 
 
-def load_previous_application(filepath: str = None) -> pd.DataFrame:
-    """Load and return the previous application dataset.
-
-    Parameters
-    ----------
-    filepath:
-        Path to the CSV file.  Defaults to the configured raw data path.
-
-    Returns
-    -------
-    pd.DataFrame
-        The loaded previous-application data.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the file does not exist at *filepath*.
-    ValueError
-        If the loaded DataFrame is empty.
+def load_previous_application(path: PathLike) -> pd.DataFrame:
     """
-    if filepath is None:
-        filepath = os.path.join(DATA_RAW_PATH, PREVIOUS_APPLICATION_FILE)
-
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"Previous application file not found: {filepath}")
-
-    df = pd.read_csv(filepath)
-
-    if df.empty:
-        raise ValueError(f"Loaded DataFrame is empty: {filepath}")
-
-    logger.info("Loaded previous application data: %d rows, %d columns", *df.shape)
-    return df
-
-
-def validate_data_quality(df: pd.DataFrame) -> dict:
-    """Run basic data-quality checks and return a summary report.
-
-    Checks performed
-    ----------------
-    * Shape (rows, columns)
-    * Missing-value counts and percentages per column
-    * Columns exceeding the configured missing threshold
-    * Duplicate row count
-    * Data types per column
-    * Presence of the target column
-
-    Parameters
-    ----------
-    df:
-        DataFrame to validate.
-
-    Returns
-    -------
-    dict
-        Quality-report dictionary with keys:
-        ``shape``, ``missing_counts``, ``missing_percentages``,
-        ``high_missing_columns``, ``duplicate_rows``, ``dtypes``,
-        ``has_target``.
+    Load previous_application CSV.
     """
-    missing_counts = df.isnull().sum()
-    missing_pct = (missing_counts / len(df)) * 100
+    return load_csv(path)
 
-    high_missing = missing_pct[
-        missing_pct > DEFAULT_MISSING_THRESHOLD * 100
-    ].index.tolist()
 
-    report = {
-        "shape": df.shape,
-        "missing_counts": missing_counts.to_dict(),
-        "missing_percentages": missing_pct.to_dict(),
-        "high_missing_columns": high_missing,
-        "duplicate_rows": int(df.duplicated().sum()),
-        "dtypes": df.dtypes.astype(str).to_dict(),
-        "has_target": TARGET_COLUMN in df.columns,
-    }
-
-    logger.info(
-        "Data quality check: %d high-missing columns, %d duplicates",
-        len(high_missing),
-        report["duplicate_rows"],
-    )
-    return report
+def drop_high_missing_columns(df: pd.DataFrame, threshold: float = 0.5) -> pd.DataFrame:
+    """
+    Drop columns with missing fraction > threshold (threshold in [0,1]).
+    """
+    missing_frac = df.isnull().mean()
+    to_drop = list(missing_frac[missing_frac > threshold].index)
+    return df.drop(columns=to_drop, errors="ignore")
 
 
 def get_missing_summary(df: pd.DataFrame) -> pd.DataFrame:
-    """Return a sorted DataFrame of missing-value statistics.
+    """
+    Return missingness summary.
 
-    Parameters
-    ----------
-    df:
-        Input DataFrame.
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns: ``missing_count``, ``missing_percentage``.
-        Sorted descending by ``missing_percentage``, filtered to rows > 0.
+    Tests expect columns:
+      - column
+      - missing_count
+      - missing_percentage
+    Sorted descending by missing_percentage.
     """
     missing_count = df.isnull().sum()
-    missing_pct = (missing_count / len(df)) * 100
+    missing_percentage = df.isnull().mean() * 100.0
 
-    summary = pd.DataFrame(
-        {"missing_count": missing_count, "missing_percentage": missing_pct}
-    )
-    summary = summary[summary["missing_count"] > 0].sort_values(
-        "missing_percentage", ascending=False
-    )
-    return summary
-
-
-def drop_high_missing_columns(
-    df: pd.DataFrame, threshold: float = None
-) -> pd.DataFrame:
-    """Drop columns whose missing-value percentage exceeds *threshold*.
-
-    Parameters
-    ----------
-    df:
-        Input DataFrame.
-    threshold:
-        Fraction (0–1).  Defaults to ``DEFAULT_MISSING_THRESHOLD``.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with high-missing columns removed.
-    """
-    if threshold is None:
-        threshold = DEFAULT_MISSING_THRESHOLD
-
-    missing_pct = df.isnull().mean()
-    cols_to_drop = missing_pct[missing_pct > threshold].index.tolist()
-
-    if cols_to_drop:
-        logger.info(
-            "Dropping %d high-missing columns: %s", len(cols_to_drop), cols_to_drop
+    out = (
+        pd.DataFrame(
+            {
+                "column": missing_count.index,
+                "missing_count": missing_count.values,
+                "missing_percentage": missing_percentage.values,
+            }
         )
+        .sort_values("missing_percentage", ascending=False)
+        .reset_index(drop=True)
+    )
+    return out
 
-    return df.drop(columns=cols_to_drop)
+
+def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0) -> dict:
+    """
+    Return a data quality report dict.
+
+    Tests expect keys:
+      - shape
+      - missing_counts
+      - missing_percentages
+      - high_missing_columns
+      - duplicate_rows
+      - dtypes
+      - has_target
+    """
+    missing_counts = df.isnull().sum()
+    missing_percentages = df.isnull().mean() * 100.0
+    high_missing_columns = list(missing_percentages[missing_percentages > high_missing_threshold].index)
+
+    report = {
+        "shape": df.shape,
+        "missing_counts": missing_counts,
+        "missing_percentages": missing_percentages,
+        "high_missing_columns": high_missing_columns,
+        "duplicate_rows": int(df.duplicated().sum()),
+        "dtypes": df.dtypes,
+        "has_target": ("TARGET" in df.columns),
+    }
+    return report
+
+
+def validate_required_columns(df: pd.DataFrame, required_columns: Tuple[str, ...]) -> None:
+    missing = [c for c in required_columns if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing required columns: {missing}")
+
+
+def load_credit_datasets(application_path: PathLike, previous_path: PathLike) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Convenience loader used by your pipeline.
+    """
+    return load_application_data(application_path), load_previous_application(previous_path)

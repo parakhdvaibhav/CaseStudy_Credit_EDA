@@ -16,9 +16,7 @@ def sample_application_df():
     data = {
         "SK_ID_CURR": range(1, n + 1),
         "TARGET": np.random.choice([0, 1], size=n, p=[0.92, 0.08]),
-        "NAME_CONTRACT_TYPE": np.random.choice(
-            ["Cash loans", "Revolving loans"], size=n
-        ),
+        "NAME_CONTRACT_TYPE": np.random.choice(["Cash loans", "Revolving loans"], size=n),
         "CODE_GENDER": np.random.choice(["M", "F"], size=n),
         "AMT_INCOME_TOTAL": np.random.uniform(50000, 500000, size=n),
         "AMT_CREDIT": np.random.uniform(100000, 1000000, size=n),

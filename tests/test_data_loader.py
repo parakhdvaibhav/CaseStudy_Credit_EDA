@@ -2,6 +2,9 @@
 Unit tests for src/data_loader.py
 """
 
+import os
+
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -12,6 +15,7 @@ from src.data_loader import (
     load_previous_application,
     validate_data_quality,
 )
+
 
 # ---------------------------------------------------------------------------
 # load_application_data
