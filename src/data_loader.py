@@ -36,6 +36,12 @@ def load_previous_application(path: PathLike) -> pd.DataFrame:
     """
     return load_csv(path)
 
+<<<<<<< HEAD
+=======
+    high_missing = missing_pct[
+        missing_pct > DEFAULT_MISSING_THRESHOLD * 100
+    ].index.tolist()
+>>>>>>> main
 
 def drop_high_missing_columns(df: pd.DataFrame, threshold: float = 0.5) -> pd.DataFrame:
     """
@@ -73,7 +79,26 @@ def get_missing_summary(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+<<<<<<< HEAD
 def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0) -> dict:
+=======
+def drop_high_missing_columns(
+    df: pd.DataFrame, threshold: float = None
+) -> pd.DataFrame:
+    """Drop columns whose missing-value percentage exceeds *threshold*.
+
+    Parameters
+    ----------
+    df:
+        Input DataFrame.
+    threshold:
+        Fraction (0–1).  Defaults to ``DEFAULT_MISSING_THRESHOLD``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with high-missing columns removed.
+>>>>>>> main
     """
     Return a data quality report dict.
 
@@ -90,6 +115,7 @@ def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0
     missing_percentages = df.isnull().mean() * 100.0
     high_missing_columns = list(missing_percentages[missing_percentages > high_missing_threshold].index)
 
+<<<<<<< HEAD
     report = {
         "shape": df.shape,
         "missing_counts": missing_counts,
@@ -100,6 +126,12 @@ def validate_data_quality(df: pd.DataFrame, high_missing_threshold: float = 50.0
         "has_target": ("TARGET" in df.columns),
     }
     return report
+=======
+    if cols_to_drop:
+        logger.info(
+            "Dropping %d high-missing columns: %s", len(cols_to_drop), cols_to_drop
+        )
+>>>>>>> main
 
 
 def validate_required_columns(df: pd.DataFrame, required_columns: Tuple[str, ...]) -> None:

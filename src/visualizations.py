@@ -10,6 +10,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+<<<<<<< HEAD
+=======
+from src.config import (
+    DEFAULT_COLOR,
+    FIGURE_SIZE,
+    HEATMAP_FIGURE_SIZE,
+    NON_DEFAULT_COLOR,
+    TARGET_COLUMN,
+)
+>>>>>>> main
 
 def plot_distribution(df: pd.DataFrame, column: str, title: str | None = None):
     if column not in df.columns:
@@ -34,9 +44,39 @@ def plot_default_analysis(df: pd.DataFrame, feature: str, title: str | None = No
     fig, ax = plt.subplots(figsize=(10, 4))
     sns.countplot(x=feature, hue=target_col, data=df, ax=ax)
 
+<<<<<<< HEAD
     ax.tick_params(axis="x", rotation=45)
     ax.set_title(title if title is not None else f"Default analysis by {feature}")
     fig.tight_layout()
+=======
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    if TARGET_COLUMN not in data.columns:
+        raise ValueError(f"Target column '{TARGET_COLUMN}' not found in DataFrame.")
+    if feature not in data.columns:
+        raise ValueError(f"Feature '{feature}' not found in DataFrame.")
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    grouped = data.groupby([feature, TARGET_COLUMN]).size().reset_index(name="count")
+    grouped[TARGET_COLUMN] = grouped[TARGET_COLUMN].map({0: "No Default", 1: "Default"})
+
+    sns.barplot(
+        data=grouped,
+        x=feature,
+        y="count",
+        hue=TARGET_COLUMN,
+        palette=[NON_DEFAULT_COLOR, DEFAULT_COLOR],
+        ax=ax,
+    )
+    ax.set_title(title or f"Default Analysis by {feature}")
+    ax.set_xlabel(feature)
+    ax.set_ylabel("Count")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+>>>>>>> main
     return fig
 
 
@@ -75,6 +115,7 @@ def plot_default_by_income(
     if target_col not in df.columns:
         raise ValueError(f"Missing required column: {target_col}")
 
+<<<<<<< HEAD
     if income_column not in df.columns:
         # Only allow fallback for the default column name
         if income_column == "INCOME_GROUP":
@@ -97,6 +138,19 @@ def plot_default_by_income(
     ax.set_ylabel("Default rate")
     ax.set_title(title if title is not None else "Default rate by income group")
     fig.tight_layout()
+=======
+    fig, ax = plt.subplots(figsize=figsize)
+    default_rates.plot(kind="bar", color=DEFAULT_COLOR, ax=ax)
+    ax.set_title(title)
+    ax.set_xlabel(income_column)
+    ax.set_ylabel("Default Rate")
+    ax.axhline(
+        y=data[TARGET_COLUMN].mean(), color="navy", linestyle="--", label="Overall Mean"
+    )
+    ax.legend()
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+>>>>>>> main
     return fig
 
 

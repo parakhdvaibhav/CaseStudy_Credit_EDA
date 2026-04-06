@@ -15,6 +15,13 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
+<<<<<<< HEAD
+=======
+from src.config import CORRELATION_THRESHOLD, TARGET_COLUMN
+
+logger = logging.getLogger(__name__)
+
+>>>>>>> main
 
 def calculate_missing_percentages(df: pd.DataFrame) -> pd.Series:
     """
@@ -126,10 +133,18 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
     rows: list[dict] = []
     for i in range(len(cols)):
         for j in range(i + 1, len(cols)):
+<<<<<<< HEAD
             c1, c2 = cols[i], cols[j]
             val = corr.iloc[i, j]
             if pd.notna(val) and abs(val) >= threshold:
                 rows.append({"feature_1": c1, "feature_2": c2, "correlation": float(val)})
+=======
+            val = corr_matrix.iloc[i, j]
+            if abs(val) >= threshold:
+                pairs.append(
+                    {"feature_1": cols[i], "feature_2": cols[j], "correlation": val}
+                )
+>>>>>>> main
 
     out = pd.DataFrame(rows, columns=["feature_1", "feature_2", "correlation"])
     if not out.empty:
@@ -139,7 +154,23 @@ def get_highly_correlated_pairs(df: pd.DataFrame, threshold: float = 0.8) -> pd.
 
 def calculate_missing_by_target(df: pd.DataFrame, target_col: str = "TARGET") -> pd.DataFrame:
     """
+<<<<<<< HEAD
     Long-format missing % by target.
+=======
+    result = (
+        df.groupby(TARGET_COLUMN)[column]
+        .apply(
+            lambda s: pd.Series({"missing_count": s.isnull().sum(), "total": len(s)})
+        )
+        .reset_index()
+    )
+    result.columns = [TARGET_COLUMN, "stat", "value"]
+    result = result.pivot(
+        index=TARGET_COLUMN, columns="stat", values="value"
+    ).reset_index()
+    result["missing_pct"] = (result["missing_count"] / result["total"]) * 100
+    return result
+>>>>>>> main
 
     IMPORTANT (per tests):
       - result must include a column literally named "TARGET"
